@@ -1,0 +1,10 @@
+application:
+  username: dev_user
+  password: dev_password
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/university_db_dev
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root_dev

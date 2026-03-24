@@ -1,0 +1,15 @@
+version: '3'
+services:
+  university-sms-system:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: university_db
+      MYSQL_ROOT_PASSWORD: root
