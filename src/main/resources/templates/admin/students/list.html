@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>Manage Students</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="space-y-6">
+        <!-- Page Header -->
+        <div class="flex items-center justify-between flex-wrap gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Students Management</h1>
+                <p class="text-gray-500 text-sm mt-1">View and manage all enrolled students</p>
+            </div>
+            <div class="flex gap-3 flex-wrap">
+                <a href="/admin/students/import"
+                   class="px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    <i data-lucide="upload" class="w-4 h-4"></i>Import CSV
+                </a>
+                <a href="/admin/students/create"
+                   class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i>Add Student
+                </a>
+            </div>
+        </div>
+        
+        <!-- Filters & Search -->
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                    <input type="text" 
+                           id="searchInput"
+                           placeholder="Name, Email, ID..." 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                    <select id="departmentFilter"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">All Departments</option>
+                        <option value="engineering">Engineering</option>
+                        <option value="science">Science</option>
+                        <option value="arts">Arts</option>
+                        <option value="commerce">Commerce</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select id="statusFilter"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">All Statuses</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="SUSPENDED">Suspended</option>
+                        <option value="GRADUATED">Graduated</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-2">
+                    <button onclick="resetFilters()"
+                            class="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Students Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <!-- Table Toolbar -->
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap">
+                <div class="text-sm text-gray-600">
+                    <span id="studentCount">0</span> students found
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="exportTableToCSV()"
+                            class="px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4"></i>Export
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table id="studentsTable" class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left font-semibold text-gray-700">
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
+                            </th>
+                            <th class="px-6 py-4 text-left font-semibold text-gray-700">Student ID</th>
+                            <th class="px-6 py-4 text-left font-semibold text-gray-700">Name</th>
+                            <th class="px-6 py-4 text-left font-semibold text-gray-700">Email</th>
+                            <th class="px-6 py-4 text-left font-semibold text-gray-700">Department</th>
+                            <th class="px-6 py-4 text-left font-semibold text-gray-700">CGPA</th>
+                            <th class="px-6 py-4 text-left font-semibold text-gray-700">Status</th>
+                            <th class="px-6 py-4 text-left font-semibold text-gray-700">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="student : ${students}" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <input type="checkbox" class="student-checkbox" th:value="${student.studentId}">
+                            </td>
+                            <td class="px-6 py-4">
+                                <code class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-mono" th:text="${student.studentId}">ID001</code>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <img th:src="${'https://api.dicebear.com/7.x/avataaars/svg?seed=' + student.studentId}" 
+                                         alt="Avatar"
+                                         class="w-8 h-8 rounded-full">
+                                    <div>
+                                        <p class="font-medium text-gray-900" th:text="${student.firstName} + ' ' + ${student.lastName}">Student Name</p>
+                                        <p class="text-xs text-gray-500">Enrolled: <span th:text="${#dates.format(student.enrollmentDate, 'MMM dd, yyyy')}">Jan 01, 2024</span></p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-600" th:text="${student.email}">email@example.com</td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">Engineering</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" th:style="|width: ${student.cgpa * 10}%|"></div>
+                                    </div>
+                                    <span class="font-semibold text-gray-700" th:text="${#numbers.formatDecimal(student.cgpa, 1, 2)}">3.75</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span th:if="${student.status == 'ACTIVE'}" class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                    <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Active
+                                </span>
+                                <span th:unless="${student.status == 'ACTIVE'}" class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                                    <i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i><span th:text="${student.status}">Suspended</span>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex gap-2">
+                                    <a th:href="@{/admin/students/{id}(id=${student.studentId})}"
+                                       class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium hover:bg-indigo-200 transition-colors">
+                                        View
+                                    </a>
+                                    <a th:href="@{/admin/students/{id}/edit(id=${student.studentId})}"
+                                       class="px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200 transition-colors">
+                                        Edit
+                                    </a>
+                                    <button onclick="deleteStudent(this)" 
+                                            th:data-id="${student.studentId}"
+                                            class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200 transition-colors">
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(students)}">
+                            <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                                <div>
+                                    <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i>
+                                    <p>No students found. <a href="/admin/students/create" class="text-indigo-600 hover:text-indigo-700">Create one now</a></p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between flex-wrap gap-4">
+                <p class="text-sm text-gray-600">
+                    Showing <span id="pageInfo" th:text="${page * 10 - 9}">1</span> to <span id="pageInfo2" th:text="${page * 10}">10</span> of <span id="totalInfo" th:text="${totalStudents}">100</span> results
+                </p>
+                <div th:replace="~{fragments/components/pagination :: pagination(page=${page}, totalPages=${totalPages})}"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Page Scripts -->
+    <div th:fragment="page-scripts">
+        <script>
+            /**
+             * Delete Student with Confirmation
+             * @param {HTMLElement} button - The delete button element
+             */
+            function deleteStudent(button) {
+                const studentId = button.getAttribute('data-id');
+                showConfirmation(
+                    'Delete Student?',
+                    'Are you sure you want to delete this student? This action cannot be undone.',
+                    () => {
+                        axios.delete(`/api/students/${studentId}`)
+                            .then(response => {
+                                showSuccess('Success', 'Student deleted successfully');
+                                setTimeout(() => location.reload(), 1000);
+                            })
+                            .catch(error => {
+                                showError('Error', error.response?.data?.message || 'Failed to delete student');
+                            });
+                    }
+                );
+            }
+            
+            /**
+             * Toggle Select All Checkboxes
+             */
+            function toggleSelectAll(checkbox) {
+                document.querySelectorAll('.student-checkbox').forEach(cb => {
+                    cb.checked = checkbox.checked;
+                });
+            }
+            
+            /**
+             * Reset Filters
+             */
+            function resetFilters() {
+                document.getElementById('searchInput').value = '';
+                document.getElementById('departmentFilter').value = '';
+                document.getElementById('statusFilter').value = '';
+                // Reload with default filters
+                window.location.href = '/admin/students';
+            }
+            
+            /**
+             * Export Table to CSV
+             */
+            function exportTableToCSV() {
+                const table = document.getElementById('studentsTable');
+                let csv = [];
+                let rows = table.querySelectorAll('tr');
+                
+                rows.forEach(row => {
+                    let csvRow = [];
+                    row.querySelectorAll('td, th').forEach(cell => {
+                        if (cell.querySelector('input[type="checkbox"]')) return;
+                        csvRow.push('"' + cell.textContent.trim().replace(/"/g, '""') + '"');
+                    });
+                    csv.push(csvRow.join(','));
+                });
+                
+                downloadCSV(csv.join('\n'), 'students.csv');
+            }
+            
+            /**
+             * Download CSV File
+             */
+            function downloadCSV(csv, filename) {
+                const link = document.createElement('a');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                link.click();
+            }
+        </script>
+    </div>
+</div>
+</body>
+</html>
