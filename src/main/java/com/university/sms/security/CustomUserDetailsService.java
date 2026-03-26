@@ -38,6 +38,4 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return UserPrincipal.create(user);
     }
-}public class CustomUserDetailsService {
-  
 }
