@@ -39,6 +39,7 @@ public class Student {
     private LocalDate enrollmentDate;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private StudentStatus status = StudentStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -46,21 +47,27 @@ public class Student {
     private Department department;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<Enrollment> enrollments = new HashSet<>();
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<Fee> fees = new HashSet<>();
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<Grade> grades = new HashSet<>();
 
     @Column(columnDefinition = "DECIMAL(5,2) DEFAULT 0.0")
+    @Builder.Default
     private Double cgpa = 0.0;
 
     @Column(columnDefinition = "INT DEFAULT 0")
+    @Builder.Default
     private Integer totalCreditsCompleted = 0;
 
     @Column(columnDefinition = "INT DEFAULT 0")
+    @Builder.Default
     private Integer totalCreditsEnrolled = 0;
 
     public enum StudentStatus {

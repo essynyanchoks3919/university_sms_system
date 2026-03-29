@@ -1,19 +1,21 @@
 package com.university.sms.service;
 
-import com.university.sms.entity.Faculty;
-import com.university.sms.entity.Department;
-import com.university.sms.repository.FacultyRepository;
-import com.university.sms.repository.DepartmentRepository;
-import com.university.sms.exception.ResourceNotFoundException;
-import com.university.sms.exception.ValidationException;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Objects; // Added import
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.university.sms.entity.Faculty;
+import com.university.sms.exception.ResourceNotFoundException;
+import com.university.sms.exception.ValidationException;
+import com.university.sms.repository.DepartmentRepository;
+import com.university.sms.repository.FacultyRepository;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -30,6 +32,7 @@ public class FacultyService {
     private AuditService auditService;
 
     public Faculty createFaculty(Faculty faculty) {
+        Objects.requireNonNull(faculty, "Faculty object cannot be null");
         log.info("Creating faculty: {}", faculty.getEmail());
         
         if (facultyRepository.findByEmail(faculty.getEmail()).isPresent()) {
@@ -42,6 +45,8 @@ public class FacultyService {
     }
 
     public Faculty updateFaculty(Long id, Faculty facultyDetails) {
+        Objects.requireNonNull(id, "Faculty ID cannot be null");
+        Objects.requireNonNull(facultyDetails, "Faculty details cannot be null");
         log.info("Updating faculty: {}", id);
         
         Faculty faculty = facultyRepository.findById(id)
@@ -71,6 +76,7 @@ public class FacultyService {
     }
 
     public void deleteFaculty(Long id) {
+        Objects.requireNonNull(id, "Faculty ID cannot be null");
         log.info("Deleting faculty: {}", id);
         
         Faculty faculty = facultyRepository.findById(id)
@@ -81,27 +87,32 @@ public class FacultyService {
     }
 
     public Faculty getFacultyById(Long id) {
+        Objects.requireNonNull(id, "Faculty ID cannot be null");
         log.info("Fetching faculty: {}", id);
         return facultyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Faculty not found with id: " + id));
     }
 
     public Page<Faculty> getAllFaculty(Pageable pageable) {
+        Objects.requireNonNull(pageable, "Pageable object cannot be null");
         log.info("Fetching all faculty");
         return facultyRepository.findAll(pageable);
     }
 
     public List<Faculty> getFacultyByDepartment(Long departmentId) {
+        Objects.requireNonNull(departmentId, "Department ID cannot be null");
         log.info("Fetching faculty for department: {}", departmentId);
         return facultyRepository.findByDepartmentId(departmentId);
     }
 
     public List<Faculty> getFacultyByStatus(Faculty.FacultyStatus status) {
+        Objects.requireNonNull(status, "Status cannot be null");
         log.info("Fetching faculty with status: {}", status);
         return facultyRepository.findByStatus(status);
     }
 
     public Faculty getFacultyByEmail(String email) {
+        Objects.requireNonNull(email, "Email cannot be null");
         log.info("Fetching faculty by email: {}", email);
         return facultyRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Faculty not found with email: " + email));

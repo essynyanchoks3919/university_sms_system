@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.lang.NonNull; // Add this import
+import java.util.Objects; // Add this import
 
 import java.time.LocalDateTime;
 
@@ -39,12 +41,15 @@ public class UserService {
         user.setStatus(User.UserStatus.ACTIVE);
 
         User savedUser = userRepository.save(user);
-        auditService.logAction("User", savedUser.getUserId(), "CREATE", null, savedUser.toString());
+        
+        // FIX: Ensure userId is not null for AuditService
+        Long userId = Objects.requireNonNull(savedUser.getUserId(), "User ID must not be null after saving");
+        auditService.logAction("User", userId, "CREATE", null, savedUser.toString());
         
         return savedUser;
     }
 
-    public User updateUser(Long id, User userDetails) {
+    public User updateUser(@NonNull Long id, User userDetails) { // FIX: Added @NonNull
         log.info("Updating user: {}", id);
         
         User user = userRepository.findById(id)
@@ -60,12 +65,14 @@ public class UserService {
         }
 
         User updatedUser = userRepository.save(user);
+        
+        // FIX: Pass the non-null id directly
         auditService.logAction("User", id, "UPDATE", oldValues, updatedUser.toString());
         
         return updatedUser;
     }
 
-    public void deleteUser(Long id) {
+    public void deleteUser(@NonNull Long id) { // FIX: Added @NonNull
         log.info("Deleting user: {}", id);
         
         User user = userRepository.findById(id)
@@ -75,7 +82,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public User getUserById(Long id) {
+    public User getUserById(@NonNull Long id) { // FIX: Added @NonNull
         log.info("Fetching user: {}", id);
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
@@ -87,13 +94,13 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
     }
 
-    public Page<User> getAllUsers(Pageable pageable) {
+    public Page<User> getAllUsers(@NonNull Pageable pageable) { // FIX: Added @NonNull
         log.info("Fetching all users");
         return userRepository.findAll(pageable);
     }
 
-    public Page<User> getUsersByRole(User.UserRole role, Pageable pageable) {
+    public Page<User> getUsersByRole(User.UserRole role, @NonNull Pageable pageable) { // FIX: Added @NonNull
         log.info("Fetching users with role: {}", role);
-        return userRepository.findAll(pageable).filter(u -> u.getRole() == role);
+        return userRepository.findByRole(role, pageable); 
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects; // Added import
 
 @Service
 @Slf4j
@@ -25,6 +26,7 @@ public class RoomService {
     private AuditService auditService;
 
     public Room createRoom(Room room) {
+        Objects.requireNonNull(room, "Room object cannot be null");
         log.info("Creating room: {}", room.getRoomNumber());
         
         if (roomRepository.findByRoomNumber(room.getRoomNumber()).isPresent()) {
@@ -41,6 +43,8 @@ public class RoomService {
     }
 
     public Room updateRoom(Long id, Room roomDetails) {
+        Objects.requireNonNull(id, "Room ID cannot be null");
+        Objects.requireNonNull(roomDetails, "Room details cannot be null");
         log.info("Updating room: {}", id);
         
         Room room = roomRepository.findById(id)
@@ -48,6 +52,8 @@ public class RoomService {
 
         String oldValues = room.toString();
         
+        // Using requireNonNull here is optional but ensures specific fields aren't null 
+        // if they are mandatory for your business logic
         if (roomDetails.getCapacity() != null) {
             room.setCapacity(roomDetails.getCapacity());
         }
@@ -73,6 +79,7 @@ public class RoomService {
     }
 
     public void deleteRoom(Long id) {
+        Objects.requireNonNull(id, "Room ID cannot be null");
         log.info("Deleting room: {}", id);
         
         Room room = roomRepository.findById(id)
@@ -83,32 +90,38 @@ public class RoomService {
     }
 
     public Room getRoomById(Long id) {
+        Objects.requireNonNull(id, "Room ID cannot be null");
         log.info("Fetching room: {}", id);
         return roomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + id));
     }
 
     public Page<Room> getAllRooms(Pageable pageable) {
+        Objects.requireNonNull(pageable, "Pageable cannot be null");
         log.info("Fetching all rooms");
         return roomRepository.findAll(pageable);
     }
 
     public List<Room> getRoomsByCapacity(Integer capacity) {
+        Objects.requireNonNull(capacity, "Capacity cannot be null");
         log.info("Fetching rooms with capacity >= {}", capacity);
         return roomRepository.findByCapacityGreaterThanOrEqual(capacity);
     }
 
     public List<Room> getRoomsByType(Room.RoomType roomType) {
+        Objects.requireNonNull(roomType, "Room type cannot be null");
         log.info("Fetching rooms of type: {}", roomType);
         return roomRepository.findByRoomType(roomType);
     }
 
     public List<Room> getRoomsByBuilding(String building) {
+        Objects.requireNonNull(building, "Building name cannot be null");
         log.info("Fetching rooms in building: {}", building);
         return roomRepository.findByBuilding(building);
     }
 
     public Room getRoomByNumber(String roomNumber) {
+        Objects.requireNonNull(roomNumber, "Room number cannot be null");
         log.info("Fetching room by number: {}", roomNumber);
         return roomRepository.findByRoomNumber(roomNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with number: " + roomNumber));

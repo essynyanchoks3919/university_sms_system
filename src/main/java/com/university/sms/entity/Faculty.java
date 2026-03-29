@@ -33,6 +33,7 @@ public class Faculty {
     private LocalDate hireDate;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private FacultyStatus status = FacultyStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,9 +46,11 @@ public class Faculty {
     private String officeHours;
 
     @OneToMany(mappedBy = "faculty", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<CourseOffering> courseOfferings = new HashSet<>();
 
     @OneToMany(mappedBy = "faculty", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<TimeTable> timeTables = new HashSet<>();
 
     public enum FacultyStatus {

@@ -29,11 +29,14 @@ public class CourseOffering {
     private Faculty faculty;
 
     @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
+    @Builder.Default
     private Integer enrolledCount = 0;
 
     @OneToMany(mappedBy = "courseOffering", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<Enrollment> enrollments = new HashSet<>();
 
     @OneToMany(mappedBy = "courseOffering", fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<TimeTable> timeTables = new HashSet<>();
 }

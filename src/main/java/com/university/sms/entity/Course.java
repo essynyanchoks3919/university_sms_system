@@ -33,6 +33,7 @@ public class Course {
     private Integer capacity;
 
     @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
+    @Builder.Default
     private Integer currentEnrollment = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -40,9 +41,13 @@ public class Course {
     private Department department;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<CourseOffering> courseOfferings = new HashSet<>();
-
+    
+    @Builder.Default
     private LocalDateTime createdDate = LocalDateTime.now();
+
+    @Builder.Default
     private LocalDateTime updatedDate = LocalDateTime.now();
 
     @Version

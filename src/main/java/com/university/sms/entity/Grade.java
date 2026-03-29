@@ -23,23 +23,29 @@ public class Grade {
     private Student student;
 
     @Column(columnDefinition = "DECIMAL(5,2) DEFAULT 0.0")
+    @Builder.Default
     private Double examScore = 0.0;
 
     @Column(columnDefinition = "DECIMAL(5,2) DEFAULT 0.0")
+    @Builder.Default
     private Double assignmentScore = 0.0;
 
     @Column(columnDefinition = "DECIMAL(5,2) DEFAULT 0.0")
+    @Builder.Default
     private Double projectScore = 0.0;
 
     @Column(columnDefinition = "DECIMAL(5,2) DEFAULT 0.0")
+    @Builder.Default
     private Double participationScore = 0.0;
 
     @Column(columnDefinition = "DECIMAL(5,2) DEFAULT 0.0")
+    @Builder.Default
     private Double finalGrade = 0.0;
 
     private String letterGrade;
 
     @Column(columnDefinition = "DECIMAL(3,2) DEFAULT 0.0")
+    @Builder.Default
     private Double gradePoint = 0.0;
 
     @ManyToOne(fetch = FetchType.LAZY)

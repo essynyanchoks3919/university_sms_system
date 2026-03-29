@@ -30,6 +30,9 @@ public class FeeService {
     private static final Double LATE_FEE_PERCENTAGE = 0.05; // 5% fine
 
     public Fee createFee(Fee fee) {
+        Objects.requireNonNull(fee, "Fee object cannot be null");
+        Objects.requireNonNull(fee.getStudent(), "Student association is required for fee creation");
+        
         log.info("Creating fee for student: {}", fee.getStudent().getStudentId());
         
         if (fee.getAmount() == null || fee.getAmount() <= 0) {
@@ -46,7 +49,18 @@ public class FeeService {
         return savedFee;
     }
 
+    public Fee getFeeById(Long feeId) {
+        Objects.requireNonNull(feeId, "Fee ID cannot be null");
+        log.info("Fetching fee with id: {}", feeId);
+        return feeRepository.findById(feeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Fee not found with id: " + feeId));
+    }
+    
+
     public Fee recordPayment(Long feeId, Double paymentAmount) {
+        Objects.requireNonNull(feeId, "Fee ID cannot be null");
+        Objects.requireNonNull(paymentAmount, "Payment amount cannot be null");
+        
         log.info("Recording payment of {} for fee: {}", paymentAmount, feeId);
         
         Fee fee = feeRepository.findById(feeId)
@@ -83,8 +97,9 @@ public class FeeService {
         List<Fee> overdueFees = feeRepository.findByDueDateBefore(LocalDate.now());
 
         for (Fee fee : overdueFees) {
-            if (fee.getStatus() == Fee.FeeStatus.PENDING || fee.getStatus() == Fee.FeeStatus.PARTIALLY_PAID) {
-                Double lateFee = fee.getAmount() * LATE_FEE_PERCENTAGE;
+            if (fee != null && (fee.getStatus() == Fee.FeeStatus.PENDING || fee.getStatus() == Fee.FeeStatus.PARTIALLY_PAID)) {
+                Double currentAmount = fee.getAmount() != null ? fee.getAmount() : 0.0;
+                Double lateFee = currentAmount * LATE_FEE_PERCENTAGE;
                 fee.setFineAmount((fee.getFineAmount() != null ? fee.getFineAmount() : 0) + lateFee);
                 fee.setStatus(Fee.FeeStatus.OVERDUE);
                 feeRepository.save(fee);
@@ -93,6 +108,7 @@ public class FeeService {
     }
 
     public List<Fee> getFeesByStudent(Long studentId) {
+        Objects.requireNonNull(studentId, "Student ID cannot be null");
         log.info("Fetching fees for student: {}", studentId);
         
         Student student = studentRepository.findById(studentId)
@@ -102,20 +118,26 @@ public class FeeService {
     }
 
     public List<Fee> getPendingFees(Long studentId) {
+        Objects.requireNonNull(studentId, "Student ID cannot be null");
         log.info("Fetching pending fees for student: {}", studentId);
         return feeRepository.findByStudentIdAndStatus(studentId, Fee.FeeStatus.PENDING);
     }
 
     public List<Fee> getOverdueFees(Long studentId) {
+        Objects.requireNonNull(studentId, "Student ID cannot be null");
         log.info("Fetching overdue fees for student: {}", studentId);
         return feeRepository.findByStudentIdAndStatus(studentId, Fee.FeeStatus.OVERDUE);
     }
 
     public Map<String, Object> generateInvoice(Long feeId) {
+        Objects.requireNonNull(feeId, "Fee ID cannot be null");
         log.info("Generating invoice for fee: {}", feeId);
         
         Fee fee = feeRepository.findById(feeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Fee not found with id: " + feeId));
+
+        // Ensure student object exists before accessing fields
+        Objects.requireNonNull(fee.getStudent(), "Associated student record is missing for this fee");
 
         Map<String, Object> invoice = new LinkedHashMap<>();
         invoice.put("invoiceNumber", fee.getInvoiceNumber() != null ? fee.getInvoiceNumber() : "INV-" + fee.getFeeId());
@@ -125,7 +147,7 @@ public class FeeService {
         invoice.put("description", fee.getDescription());
         invoice.put("amount", fee.getAmount());
         invoice.put("fineAmount", fee.getFineAmount());
-        invoice.put("totalDue", fee.getAmount() + (fee.getFineAmount() != null ? fee.getFineAmount() : 0));
+        invoice.put("totalDue", (fee.getAmount() != null ? fee.getAmount() : 0) + (fee.getFineAmount() != null ? fee.getFineAmount() : 0));
         invoice.put("dueDate", fee.getDueDate());
         invoice.put("status", fee.getStatus());
         invoice.put("generatedDate", LocalDateTime.now());
@@ -134,6 +156,7 @@ public class FeeService {
     }
 
     public Boolean hasFinancialHold(Long studentId) {
+        Objects.requireNonNull(studentId, "Student ID cannot be null");
         log.info("Checking financial hold for student: {}", studentId);
         
         List<Fee> overdueFees = feeRepository.findByStudentIdAndStatus(studentId, Fee.FeeStatus.OVERDUE);
@@ -141,23 +164,24 @@ public class FeeService {
     }
 
     public Map<String, Object> getFinancialSummary(Long studentId) {
+        Objects.requireNonNull(studentId, "Student ID cannot be null");
         log.info("Fetching financial summary for student: {}", studentId);
         
         List<Fee> fees = getFeesByStudent(studentId);
 
         Double totalPaid = fees.stream()
-                .filter(f -> f.getStatus() == Fee.FeeStatus.PAID)
-                .mapToDouble(Fee::getAmount)
+                .filter(f -> f != null && f.getStatus() == Fee.FeeStatus.PAID)
+                .mapToDouble(f -> f.getAmount() != null ? f.getAmount() : 0.0)
                 .sum();
 
         Double totalPending = fees.stream()
-                .filter(f -> f.getStatus() == Fee.FeeStatus.PENDING)
-                .mapToDouble(Fee::getAmount)
+                .filter(f -> f != null && f.getStatus() == Fee.FeeStatus.PENDING)
+                .mapToDouble(f -> f.getAmount() != null ? f.getAmount() : 0.0)
                 .sum();
 
         Double totalOverdue = fees.stream()
-                .filter(f -> f.getStatus() == Fee.FeeStatus.OVERDUE)
-                .mapToDouble(f -> f.getAmount() + (f.getFineAmount() != null ? f.getFineAmount() : 0))
+                .filter(f -> f != null && f.getStatus() == Fee.FeeStatus.OVERDUE)
+                .mapToDouble(f -> (f.getAmount() != null ? f.getAmount() : 0.0) + (f.getFineAmount() != null ? f.getFineAmount() : 0.0))
                 .sum();
 
         Map<String, Object> summary = new LinkedHashMap<>();

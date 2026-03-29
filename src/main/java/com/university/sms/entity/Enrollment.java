@@ -27,9 +27,11 @@ public class Enrollment {
     private LocalDateTime enrollmentDate;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private EnrollmentStatus status = EnrollmentStatus.ENROLLED;
 
     @Column(columnDefinition = "INT DEFAULT 0")
+    @Builder.Default
     private Integer attendancePercentage = 0;
 
     public enum EnrollmentStatus {

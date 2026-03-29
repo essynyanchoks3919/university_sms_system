@@ -29,13 +29,16 @@ public class Fee {
     private LocalDate paymentDate;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private FeeStatus status = FeeStatus.PENDING;
 
     @Column(columnDefinition = "DECIMAL(10,2) DEFAULT 0.0")
+    @Builder.Default
     private Double fineAmount = 0.0;
 
     private String description;
     private String invoiceNumber;
+    @Builder.Default
     private LocalDateTime createdDate = LocalDateTime.now();
 
     public enum FeeStatus {

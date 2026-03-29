@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects; // 1. Added Import
 
 @Service
 @Slf4j
@@ -25,6 +26,8 @@ public class SemesterService {
     private AuditService auditService;
 
     public Semester createSemester(Semester semester) {
+        // Guard against null input
+        Objects.requireNonNull(semester, "Semester object cannot be null");
         log.info("Creating semester: {}", semester.getSemesterCode());
         
         if (semesterRepository.findBySemesterCode(semester.getSemesterCode()).isPresent()) {
@@ -37,6 +40,9 @@ public class SemesterService {
     }
 
     public Semester updateSemester(Long id, Semester semesterDetails) {
+        Objects.requireNonNull(id, "Semester ID cannot be null");
+        Objects.requireNonNull(semesterDetails, "Semester details cannot be null");
+        
         log.info("Updating semester: {}", id);
         
         Semester semester = semesterRepository.findById(id)
@@ -44,15 +50,10 @@ public class SemesterService {
 
         String oldValues = semester.toString();
         
-        if (semesterDetails.getSemesterName() != null) {
-            semester.setSemesterName(semesterDetails.getSemesterName());
-        }
-        if (semesterDetails.getIsActive() != null) {
-            semester.setIsActive(semesterDetails.getIsActive());
-        }
-        if (semesterDetails.getSemesterYear() != null) {
-            semester.setSemesterYear(semesterDetails.getSemesterYear());
-        }
+        // Use requireNonNull if these fields are MANDATORY for an update
+        semester.setSemesterName(Objects.requireNonNull(semesterDetails.getSemesterName(), "Semester name is required"));
+        semester.setIsActive(Objects.requireNonNull(semesterDetails.getIsActive(), "Active status is required"));
+        semester.setSemesterYear(Objects.requireNonNull(semesterDetails.getSemesterYear(), "Semester year is required"));
 
         Semester updatedSemester = semesterRepository.save(semester);
         auditService.logAction("Semester", id, "UPDATE", oldValues, updatedSemester.toString());
@@ -60,6 +61,7 @@ public class SemesterService {
     }
 
     public void deleteSemester(Long id) {
+        Objects.requireNonNull(id, "ID to delete cannot be null");
         log.info("Deleting semester: {}", id);
         
         Semester semester = semesterRepository.findById(id)
@@ -70,12 +72,14 @@ public class SemesterService {
     }
 
     public Semester getSemesterById(Long id) {
+        Objects.requireNonNull(id, "Search ID cannot be null");
         log.info("Fetching semester: {}", id);
         return semesterRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Semester not found with id: " + id));
     }
 
     public Page<Semester> getAllSemesters(Pageable pageable) {
+        Objects.requireNonNull(pageable, "Pageable parameters cannot be null");
         log.info("Fetching all semesters");
         return semesterRepository.findAll(pageable);
     }
@@ -87,11 +91,13 @@ public class SemesterService {
     }
 
     public List<Semester> getSemestersByYear(Integer year) {
+        Objects.requireNonNull(year, "Year cannot be null");
         log.info("Fetching semesters for year: {}", year);
         return semesterRepository.findByYear(year);
     }
 
     public Semester getSemesterByCode(String semesterCode) {
+        Objects.requireNonNull(semesterCode, "Semester code cannot be null");
         log.info("Fetching semester by code: {}", semesterCode);
         return semesterRepository.findBySemesterCode(semesterCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Semester not found with code: " + semesterCode));

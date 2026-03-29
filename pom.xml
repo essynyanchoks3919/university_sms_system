@@ -20,7 +20,7 @@
     <description>Enterprise-Grade University Student Management System</description>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jjwt.version>0.9.1</jjwt.version>
     </properties>
@@ -65,7 +65,7 @@
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
+            <artifactId>lombok</artifactId>            
             <optional>true</optional>
         </dependency>
 

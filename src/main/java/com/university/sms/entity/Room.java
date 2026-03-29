@@ -21,15 +21,18 @@ public class Room {
     private Integer capacity;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private RoomType roomType = RoomType.CLASSROOM;
 
     private String building;
     private Integer floor;
 
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    @Builder.Default
     private Boolean hasProjector = false;
 
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    @Builder.Default
     private Boolean hasAc = false;
 
     public enum RoomType {

@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.lang.NonNull; // Added import
+import java.util.Objects; // Added import
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.List;
 @Service
 @Slf4j
 @Transactional
+@SuppressWarnings("null")
 public class EnrollmentService {
 
     @Autowired
@@ -32,7 +35,7 @@ public class EnrollmentService {
     @Autowired
     private AuditService auditService;
 
-    public Enrollment enrollStudent(Long studentId, Long courseOfferingId) {
+    public Enrollment enrollStudent(@NonNull Long studentId, @NonNull Long courseOfferingId) {
         log.info("Enrolling student {} in course offering {}", studentId, courseOfferingId);
         
         Student student = studentRepository.findById(studentId)
@@ -49,7 +52,6 @@ public class EnrollmentService {
             throw new ValidationException("Student status must be ACTIVE to enroll");
         }
 
-        // Check for financial hold
         if (feeService.hasFinancialHold(studentId)) {
             throw new ValidationException("Student has outstanding fees - financial hold in place");
         }
@@ -61,24 +63,25 @@ public class EnrollmentService {
                 .status(Enrollment.EnrollmentStatus.ENROLLED)
                 .attendancePercentage(0)
                 .build();
-
+                        
+        
         Enrollment savedEnrollment = enrollmentRepository.save(enrollment);
         
-        // Update course offering enrolled count
         courseOffering.setEnrolledCount(courseOffering.getEnrolledCount() + 1);
         courseOfferingRepository.save(courseOffering);
         
-        // Add course to student's enrollments
         student.getEnrollments().add(savedEnrollment);
         student.setTotalCreditsEnrolled(student.getTotalCreditsEnrolled() + courseOffering.getCourse().getCredits());
         studentRepository.save(student);
 
-        auditService.logAction("Enrollment", savedEnrollment.getEnrollmentId(), "CREATE", null, savedEnrollment.toString());
+        // FIX: Ensure the saved ID is not null for the audit service
+        Long enrollmentId = Objects.requireNonNull(savedEnrollment.getEnrollmentId(), "Enrollment ID must not be null after saving");
+        auditService.logAction("Enrollment", enrollmentId, "CREATE", null, savedEnrollment.toString());
         
         return savedEnrollment;
     }
 
-    public Enrollment dropCourse(Long enrollmentId) {
+    public Enrollment dropCourse(@NonNull Long enrollmentId) {
         log.info("Dropping course for enrollment: {}", enrollmentId);
         
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
@@ -96,23 +99,23 @@ public class EnrollmentService {
         return updatedEnrollment;
     }
 
-    public List<Enrollment> getStudentEnrollments(Long studentId) {
+    public List<Enrollment> getStudentEnrollments(@NonNull Long studentId) {
         log.info("Fetching enrollments for student: {}", studentId);
         return enrollmentRepository.findByStudentId(studentId);
     }
 
-    public List<Enrollment> getCourseEnrollments(Long courseOfferingId) {
+    public List<Enrollment> getCourseEnrollments(@NonNull Long courseOfferingId) {
         log.info("Fetching enrollments for course offering: {}", courseOfferingId);
         return enrollmentRepository.findByCourseOfferingId(courseOfferingId);
     }
 
-    public Enrollment getEnrollmentById(Long id) {
+    public Enrollment getEnrollmentById(@NonNull Long id) {
         log.info("Fetching enrollment: {}", id);
         return enrollmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found with id: " + id));
     }
 
-    public void updateAttendance(Long enrollmentId, Integer attendancePercentage) {
+    public void updateAttendance(@NonNull Long enrollmentId, Integer attendancePercentage) {
         log.info("Updating attendance for enrollment: {} to {}%", enrollmentId, attendancePercentage);
         
         if (attendancePercentage < 0 || attendancePercentage > 100) {

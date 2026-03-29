@@ -32,6 +32,9 @@ public class GradeService {
     private AuditService auditService;
 
     public Grade recordGrade(Grade grade) {
+        Objects.requireNonNull(grade, "Grade object cannot be null");
+        Objects.requireNonNull(grade.getEnrollment(), "Enrollment association is required");
+        
         log.info("Recording grade for enrollment: {}", grade.getEnrollment().getEnrollmentId());
         
         if (grade.getExamScore() == null || grade.getExamScore() < 0 || grade.getExamScore() > 100) {
@@ -46,7 +49,16 @@ public class GradeService {
         return savedGrade;
     }
 
+    public Grade getGradeById(Long id) {
+        Objects.requireNonNull(id, "Grade ID cannot be null");
+        return gradeRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
+    }
+    
+
     private void calculateFinalGrade(Grade grade) {
+        Objects.requireNonNull(grade, "Grade object cannot be null during calculation");
+        
         Double examWeight = 0.40;
         Double assignmentWeight = 0.30;
         Double projectWeight = 0.20;
@@ -63,6 +75,7 @@ public class GradeService {
     }
 
     private String convertToLetterGrade(Double score) {
+        Objects.requireNonNull(score, "Score cannot be null for letter grade conversion");
         if (score >= 90) return "A";
         else if (score >= 80) return "B";
         else if (score >= 70) return "C";
@@ -71,6 +84,7 @@ public class GradeService {
     }
 
     private Double convertToGradePoint(Double score) {
+        Objects.requireNonNull(score, "Score cannot be null for grade point conversion");
         if (score >= 90) return 4.0;
         else if (score >= 80) return 3.5;
         else if (score >= 70) return 3.0;
@@ -79,6 +93,9 @@ public class GradeService {
     }
 
     public Grade updateGrade(Long id, Grade gradeDetails) {
+        Objects.requireNonNull(id, "Grade ID cannot be null");
+        Objects.requireNonNull(gradeDetails, "Grade details cannot be null");
+        
         log.info("Updating grade: {}", id);
         
         Grade grade = gradeRepository.findById(id)
@@ -108,6 +125,7 @@ public class GradeService {
     }
 
     public List<Grade> getGradesByStudent(Long studentId) {
+        Objects.requireNonNull(studentId, "Student ID cannot be null");
         log.info("Fetching grades for student: {}", studentId);
         
         Student student = studentRepository.findById(studentId)
@@ -117,22 +135,27 @@ public class GradeService {
     }
 
     public List<Grade> getGradesByCourseOffering(Long courseOfferingId) {
+        Objects.requireNonNull(courseOfferingId, "Course Offering ID cannot be null");
         log.info("Fetching grades for course offering: {}", courseOfferingId);
         return gradeRepository.findByCourseOfferingId(courseOfferingId);
     }
 
     @Transactional
     public List<Grade> bulkUploadGrades(List<Grade> grades) {
+        Objects.requireNonNull(grades, "Grade list cannot be null");
         log.info("Bulk uploading {} grades", grades.size());
         
         List<Grade> savedGrades = new ArrayList<>();
         
         for (Grade grade : grades) {
             try {
+                // Safeguard against null elements within the list
+                Objects.requireNonNull(grade, "Individual grade in bulk list cannot be null");
                 calculateFinalGrade(grade);
                 savedGrades.add(gradeRepository.save(grade));
             } catch (Exception e) {
-                log.warn("Failed to upload grade for enrollment: {}", grade.getEnrollment().getEnrollmentId(), e);
+                log.warn("Failed to upload grade: {}", (grade != null && grade.getEnrollment() != null) ? 
+                         grade.getEnrollment().getEnrollmentId() : "Unknown", e);
             }
         }
         
@@ -140,6 +163,7 @@ public class GradeService {
     }
 
     public Map<String, Object> generateTranscript(Long studentId) {
+        Objects.requireNonNull(studentId, "Student ID cannot be null");
         log.info("Generating transcript for student: {}", studentId);
         
         Student student = studentService.getStudentById(studentId);
@@ -157,6 +181,9 @@ public class GradeService {
         List<Map<String, Object>> courseGrades = new ArrayList<>();
         for (Grade grade : grades) {
             Map<String, Object> courseGrade = new LinkedHashMap<>();
+            // Using requireNonNull here if course data is mandatory for a valid transcript
+            Objects.requireNonNull(grade.getEnrollment().getCourseOffering().getCourse(), "Course data missing for grade record");
+            
             courseGrade.put("courseCode", grade.getEnrollment().getCourseOffering().getCourse().getCourseCode());
             courseGrade.put("courseName", grade.getEnrollment().getCourseOffering().getCourse().getCourseName());
             courseGrade.put("credits", grade.getEnrollment().getCourseOffering().getCourse().getCredits());

@@ -25,16 +25,20 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private UserRole role = UserRole.STUDENT;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private UserStatus status = UserStatus.ACTIVE;
 
+    @Builder.Default
     private LocalDateTime createdDate = LocalDateTime.now();
     private LocalDateTime lastLogin;
     private LocalDateTime passwordChangedDate;
 
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    @Builder.Default
     private Boolean twoFactorEnabled = false;
 
     public enum UserRole {

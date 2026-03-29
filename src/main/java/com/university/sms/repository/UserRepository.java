@@ -1,6 +1,8 @@
 package com.university.sms.repository;
 
 import com.university.sms.entity.User;
+
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,11 +14,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     Optional<User> findByUsername(String username);
     
-    Optional<User> findByEmail(String email);
+    Optional<User> findByEmail(String email);    
+     
+    Page<User> findByRole(User.UserRole role, org.springframework.data.domain.Pageable pageable);
     
-    List<User> findByRole(User.UserRole role);
-    
-    List<User> findByStatus(User.UserStatus status);
+    Page<User> findByStatus(User.UserStatus status, org.springframework.data.domain.Pageable pageable);
     
     Boolean existsByUsername(String username);
     

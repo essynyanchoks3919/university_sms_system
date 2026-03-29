@@ -33,10 +33,13 @@ public class StudentService {
     private AuditService auditService;
 
     public Student createStudent(Student student) {
-        log.info("Creating new student: {}", student.getEmail());
+        Objects.requireNonNull(student, "Student object cannot be null");
+        String email = Objects.requireNonNull(student.getEmail(), "Student email is required");
         
-        if (studentRepository.findByEmail(student.getEmail()).isPresent()) {
-            throw new ValidationException("Email already exists: " + student.getEmail());
+        log.info("Creating new student: {}", email);
+        
+        if (studentRepository.findByEmail(email).isPresent()) {
+            throw new ValidationException("Email already exists: " + email);
         }
 
         student.setEnrollmentDate(LocalDate.now());
@@ -45,13 +48,19 @@ public class StudentService {
         student.setTotalCreditsCompleted(0);
 
         Student savedStudent = studentRepository.save(student);
-        auditService.logAction("Student", savedStudent.getStudentId(), "CREATE", null, savedStudent.toString());
         
-        log.info("Student created successfully: {}", savedStudent.getStudentId());
+        // Wrap the ID to satisfy the compiler for the audit log
+        Long savedId = Objects.requireNonNull(savedStudent.getStudentId(), "Saved Student ID cannot be null");
+        auditService.logAction("Student", savedId, "CREATE", null, savedStudent.toString());
+        
+        log.info("Student created successfully: {}", savedId);
         return savedStudent;
     }
 
     public Student updateStudent(Long id, Student studentDetails) {
+        Objects.requireNonNull(id, "Student ID is required for update");
+        Objects.requireNonNull(studentDetails, "Update details cannot be null");
+        
         log.info("Updating student: {}", id);
         
         Student student = studentRepository.findById(id)
@@ -82,6 +91,7 @@ public class StudentService {
     }
 
     public void deleteStudent(Long id) {
+        Objects.requireNonNull(id, "ID is required for deletion");
         log.info("Deleting student: {}", id);
         
         Student student = studentRepository.findById(id)
@@ -92,11 +102,13 @@ public class StudentService {
     }
 
     public Page<Student> getAllStudents(Pageable pageable) {
+        Objects.requireNonNull(pageable, "Pageable parameter cannot be null");
         log.info("Fetching all students, page: {}", pageable.getPageNumber());
         return studentRepository.findAll(pageable);
     }
 
     public Student getStudentById(Long id) {
+        Objects.requireNonNull(id, "Student ID is required");
         log.info("Fetching student: {}", id);
         return studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + id));
@@ -121,32 +133,42 @@ public class StudentService {
     }
 
     public List<Enrollment> getStudentEnrollments(Long studentId) {
+        Objects.requireNonNull(studentId, "Student ID is required");
         log.info("Fetching enrollments for student: {}", studentId);
         Student student = getStudentById(studentId);
-        return new ArrayList<>(student.getEnrollments());
+        // Ensure enrollments list is not null before wrapping in ArrayList
+        return new ArrayList<>(Objects.requireNonNull(student.getEnrollments(), "Enrollments list is null"));
     }
 
     public Double calculateCGPA(Long studentId) {
+        Objects.requireNonNull(studentId, "Student ID is required for CGPA calculation");
         log.info("Calculating CGPA for student: {}", studentId);
         
         Student student = getStudentById(studentId);
         List<Grade> grades = gradeRepository.findByStudent(student);
 
-        if (grades.isEmpty()) {
+        if (grades == null || grades.isEmpty()) {
             return 0.0;
         }
 
-        Double totalPoints = 0.0;
+        double totalPoints = 0.0;
         int totalCredits = 0;
 
         for (Grade grade : grades) {
-            if (grade.getGradePoint() != null && grade.getEnrollment().getCourseOffering().getCourse().getCredits() != null) {
-                totalPoints += grade.getGradePoint() * grade.getEnrollment().getCourseOffering().getCourse().getCredits();
-                totalCredits += grade.getEnrollment().getCourseOffering().getCourse().getCredits();
+            // Safely navigate the deep object graph to avoid null warnings
+            if (grade != null && grade.getGradePoint() != null && grade.getEnrollment() != null) {
+                var courseOffering = grade.getEnrollment().getCourseOffering();
+                if (courseOffering != null && courseOffering.getCourse() != null) {
+                    Integer credits = courseOffering.getCourse().getCredits();
+                    if (credits != null) {
+                        totalPoints += grade.getGradePoint() * credits;
+                        totalCredits += credits;
+                    }
+                }
             }
         }
 
-        Double cgpa = totalCredits > 0 ? totalPoints / totalCredits : 0.0;
+        double cgpa = totalCredits > 0 ? totalPoints / totalCredits : 0.0;
         student.setCgpa(cgpa);
         student.setTotalCreditsCompleted(totalCredits);
         studentRepository.save(student);
@@ -156,13 +178,16 @@ public class StudentService {
 
     @Transactional
     public List<Student> importStudentsBatch(List<Student> students) {
+        Objects.requireNonNull(students, "Batch list cannot be null");
         log.info("Batch importing {} students", students.size());
         
         List<Student> savedStudents = new ArrayList<>();
         
         for (Student student : students) {
+            if (student == null) continue;
             try {
-                if (studentRepository.findByEmail(student.getEmail()).isEmpty()) {
+                String email = student.getEmail();
+                if (email != null && studentRepository.findByEmail(email).isEmpty()) {
                     student.setEnrollmentDate(LocalDate.now());
                     student.setStatus(Student.StudentStatus.ACTIVE);
                     savedStudents.add(studentRepository.save(student));
@@ -177,13 +202,17 @@ public class StudentService {
     }
 
     public List<Student> getStudentsByDepartment(Long departmentId) {
+        Objects.requireNonNull(departmentId, "Department ID is required");
         log.info("Fetching students for department: {}", departmentId);
         Department department = departmentRepository.findById(departmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + departmentId));
-        return new ArrayList<>(department.getStudents());
+        
+        return new ArrayList<>(Objects.requireNonNull(department.getStudents(), "Student list is null"));
     }
 
     public Student changeStudentStatus(Long id, Student.StudentStatus status) {
+        Objects.requireNonNull(id, "Student ID is required");
+        Objects.requireNonNull(status, "Status cannot be null");
         log.info("Changing student status to {} for student: {}", status, id);
         
         Student student = getStudentById(id);

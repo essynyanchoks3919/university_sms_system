@@ -35,6 +35,7 @@ public class Audit {
     private String modifiedBy;
 
     @Column(nullable = false)
+    @Builder.Default
     private LocalDateTime modifiedDate = LocalDateTime.now();
 
     private String description;

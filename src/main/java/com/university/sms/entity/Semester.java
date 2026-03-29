@@ -26,11 +26,14 @@ public class Semester {
     private Integer semesterNumber;
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    @Builder.Default
     private Boolean isActive = false;
 
     @OneToMany(mappedBy = "semester", fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<CourseOffering> courseOfferings = new HashSet<>();
 
     @OneToMany(mappedBy = "semester", fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<Grade> grades = new HashSet<>();
 }
